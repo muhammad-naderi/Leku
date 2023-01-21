@@ -22,7 +22,7 @@ class ReactiveLocationProvider(
             ContextCompat.checkSelfPermission(context, Manifest.permission.ACCESS_FINE_LOCATION) == PackageManager.PERMISSION_GRANTED
         ) {
             LocationServices.getFusedLocationProviderClient(context)
-                .lastLocation
+                .getCurrentLocation(100, null)
                 .addOnCompleteListener { locTask ->
                     task.resume(locTask.result)
                 }
