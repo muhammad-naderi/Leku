@@ -1,0 +1,23 @@
+<resources
+  xmlns:tools="http://schemas.android.com/tools">
+  <string name="leku_app_name" translatable="false" tools:ignore="UnusedResources">Leku</string>
+  <string name="leku_title_activity_location_picker" tools:ignore="UnusedResources">Location Picker</string>
+  <string name="leku_no_geocoder_available">سرویس در دسترس نیست</string>
+  <string name="leku_load_location_error">خطایی پیش آمده است، لطفا مجدد تلاش کنید.</string>
+  <string name="leku_no_search_results">نتیجه ای یافت نشد</string>
+  <string name="leku_network_resource">شبکه</string>
+  <string name="leku_unknown_location">مکان ناشناس</string>
+  <string name="leku_voice_search_promp">جستجو با صدا…</string>
+  <string name="leku_voice_search_extra_language">fa-IR</string>
+  <string name="leku_toolbar_action_voice_title">صدا</string>
+  <string name="leku_search_hint">جستجو</string>
+  <string name="leku_longitude">طول جغرافیایی</string>
+  <string name="leku_latitude">عرض جغرافیایی</string>
+  <string name="leku_coordinates">مختصات</string>
+  <string name="leku_use_this_location">ثبت موقعیت</string>
+  <string name="leku_accessibility_remove_current_location">حذف موقعیت</string>
+  <string name="leku_accessibility_satellite_button_description">تغییر به نمای ماهواره/نقشه</string>
+  <string name="leku_accessibility_my_location_button_description">انتخاب موقعیت فعلی</string>
+
+  <string name="leku_formatted_address" translatable="false">%1$s, %2$s</string>
+</resources>
