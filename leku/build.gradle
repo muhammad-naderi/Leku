@@ -14,7 +14,7 @@ android {
     vectorDrawables.useSupportLibrary = true
   }
 
-  flavorDimensions 'tier'
+  flavorDimensions += 'tier'
 
   buildTypes {
     release {
