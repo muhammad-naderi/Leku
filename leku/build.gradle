@@ -2,8 +2,8 @@ apply plugin: 'com.android.library'
 apply plugin: 'kotlin-android'
 
 android {
-  compileSdk 34
-  compileSdkVersion 34
+  compileSdk 32
+  compileSdkVersion 32
   resourcePrefix 'leku_'
 
   defaultConfig {
