@@ -64,7 +64,7 @@ Component library for Android that uses Google Maps and returns a latitude, long
 ### Prerequisites
 
 minSdkVersion >= 21<br/>
-Google Play Services = 18.0.0<br/>
+Google Play Services = 18.1.0<br/>
 AndroidX
 
 ### Download
@@ -81,14 +81,14 @@ Include the dependency in your app `build.gradle`:
 
 ```groovy
 dependencies {
-    implementation 'com.adevinta.android:leku:9.1.4'
+    implementation 'com.adevinta.android:leku:11.1.1'
 }
 ```
 
 Alternatively, if you are using a different version of Google Play Services and AndroidX use this instead:
 
 ```groovy
-implementation ('com.adevinta.android:leku:9.1.4') {
+implementation ('com.adevinta.android:leku:11.1.1') {
     exclude group: 'com.google.android.gms'
     exclude group: 'androidx.appcompat'
 }
@@ -171,12 +171,44 @@ To use the LocationPickerActivity first you need to add these lines to your Andr
 </activity>
 ```
 
-Then you have setup the call to start this activity wherever you like, always as startActivityForResult.
+Then you have setup the call to start this activity wherever you like, always as a ActivityResultLauncher.
 You can set a default location, search zone and other customizable parameters to load when you start the activity.
 You only need to use the Builder setters like:
 
 ```kotlin
-val locationPickerIntent = LocationPickerActivity.Builder()
+val lekuActivityResultLauncher =
+        registerForActivityResult(ActivityResultContracts.StartActivityForResult()) { result: ActivityResult ->
+            if (result.resultCode == Activity.RESULT_OK) {
+                Log.d("RESULT****", "OK")
+                val latitude = data?.getDoubleExtra(LATITUDE, 0.0)
+                Log.d("LATITUDE****", latitude.toString())
+                val longitude = data?.getDoubleExtra(LONGITUDE, 0.0)
+                Log.d("LONGITUDE****", longitude.toString())
+                val address = data?.getStringExtra(LOCATION_ADDRESS)
+                Log.d("ADDRESS****", address.toString())
+                val postalcode = data?.getStringExtra(ZIPCODE)
+                Log.d("POSTALCODE****", postalcode.toString())
+                val bundle = data?.getBundleExtra(TRANSITION_BUNDLE)
+                Log.d("BUNDLE TEXT****", bundle?.getString("test").toString())
+                val fullAddress = data?.getParcelableExtra<Address>(ADDRESS)
+                if (fullAddress != null) {
+                    Log.d("FULL ADDRESS****", fullAddress.toString())
+                }
+                val timeZoneId = data?.getStringExtra(TIME_ZONE_ID)
+                if (timeZoneId != null) {
+                    Log.d("TIME ZONE ID****", timeZoneId)
+                }
+                val timeZoneDisplayName = data?.getStringExtra(TIME_ZONE_DISPLAY_NAME)
+                if (timeZoneDisplayName != null) {
+                    Log.d("TIME ZONE NAME****", timeZoneDisplayName)
+                }
+            } else {
+                Log.d("RESULT****", "CANCELLED")
+            }
+        }
+
+val activity = context as MainActivity
+val locationPickerIntent = LocationPickerActivity.Builder(applicationContext)
     .withLocation(41.4036299, 2.1743558)
     .withGeolocApiKey("<PUT API KEY HERE>")
     .withGooglePlacesApiKey("<PUT API KEY HERE>")
@@ -193,51 +225,9 @@ val locationPickerIntent = LocationPickerActivity.Builder()
     .withVoiceSearchHidden()
     .withUnnamedRoadHidden()
     .withSearchBarHidden()
-    .build(applicationContext)
+    .build()
 
-startActivityForResult(locationPickerIntent, MAP_BUTTON_REQUEST_CODE)
-```
-
-And add the response code from that activity:
-
-```kotlin
-override fun onActivityResult(requestCode: Int, resultCode: Int, data: Intent?) {
-    if (resultCode == Activity.RESULT_OK && data != null) {
-        Log.d("RESULT****", "OK")
-        if (requestCode == 1) {
-            val latitude = data.getDoubleExtra(LATITUDE, 0.0)
-            Log.d("LATITUDE****", latitude.toString())
-            val longitude = data.getDoubleExtra(LONGITUDE, 0.0)
-            Log.d("LONGITUDE****", longitude.toString())
-            val address = data.getStringExtra(LOCATION_ADDRESS)
-            Log.d("ADDRESS****", address.toString())
-            val postalcode = data.getStringExtra(ZIPCODE)
-            Log.d("POSTALCODE****", postalcode.toString())
-            val bundle = data.getBundleExtra(TRANSITION_BUNDLE)
-            Log.d("BUNDLE TEXT****", bundle.getString("test"))
-            val fullAddress = data.getParcelableExtra<Address>(ADDRESS)
-            if (fullAddress != null) {
-                Log.d("FULL ADDRESS****", fullAddress.toString())
-            }
-            val timeZoneId = data.getStringExtra(TIME_ZONE_ID)
-            Log.d("TIME ZONE ID****", timeZoneId)
-            val timeZoneDisplayName = data.getStringExtra(TIME_ZONE_DISPLAY_NAME)
-            Log.d("TIME ZONE NAME****", timeZoneDisplayName)
-        } else if (requestCode == 2) {
-            val latitude = data.getDoubleExtra(LATITUDE, 0.0)
-            Log.d("LATITUDE****", latitude.toString())
-            val longitude = data.getDoubleExtra(LONGITUDE, 0.0)
-            Log.d("LONGITUDE****", longitude.toString())
-            val address = data.getStringExtra(LOCATION_ADDRESS)
-            Log.d("ADDRESS****", address.toString())
-            val lekuPoi = data.getParcelableExtra<LekuPoi>(LEKU_POI)
-            Log.d("LekuPoi****", lekuPoi.toString())
-        }
-    }
-    if (resultCode == Activity.RESULT_CANCELED) {
-        Log.d("RESULT****", "CANCELLED")
-    }
-}
+activity.lekuActivityResultLauncher.launch(locationPickerIntent)
 ```
 
 That's all folks!
@@ -252,7 +242,7 @@ Leku now supports Google Places queries using the search box. If you want to ena
 2. Add the key to the location picker builder
 
 ```kotlin
-val locationPickerIntent = LocationPickerActivity.Builder()
+val locationPickerIntent = LocationPickerActivity.Builder(context)
       .withGooglePlacesApiKey("<PUT API KEY HERE>")
 ```
 
@@ -291,9 +281,7 @@ If you need to send and receive a param through the LocationPickerActivity you c
 You only need to add an "Extra" param to the intent like:
 
 ```kotlin
-val locationPickerIntent = LocationPickerActivity.Builder().build(applicationContext)
 locationPickerIntent.putExtra("test", "this is a test")
-startActivityForResult(locationPickerIntent, MAP_BUTTON_REQUEST_CODE)
 ```
 
 And parse it on onActivityResult callback:
@@ -354,7 +342,7 @@ intent.putExtra(LocationPickerActivity.LAYOUTS_TO_HIDE, "street|city|zipcode")
 If you want to use the old Leku layout design you need to add this line to the builder:
 
 ```kotlin
-val locationPickerIntent = LocationPickerActivity.Builder()
+val locationPickerIntent = LocationPickerActivity.Builder(context)
     .withLegacyLayout()
 ```
 
@@ -465,7 +453,7 @@ class CustomLocationsAdapter : SuggestSearchAdapter<SearchViewHolder>() {
 ```
 
 ```kotlin
-val locationPickerIntent = LocationPickerActivity.Builder()
+val locationPickerIntent = LocationPickerActivity.Builder(context)
     ...
     .withAdapter(CustomLocationsAdapter())
     .build(requireContext())
@@ -510,7 +498,7 @@ class LocationDataSource(val locationRepository: LocationRepository) : GeocoderD
 ```
 
 ```kotlin
-val locationPickerIntent = LocationPickerActivity.Builder()
+val locationPickerIntent = LocationPickerActivity.Builder(context)
     ...
     .withDataSource(LocationDataSource(myLocationRepository))
     .build(requireContext())
@@ -592,7 +580,7 @@ override fun onCreate(savedInstanceState: Bundle?) {
           GeoApiContext.Builder().apiKey(GoogleTimeZoneDataSource.getApiKey(this)).build())
   geocoderPresenter = GeocoderPresenter(
           ReactiveLocationProvider(applicationContext), geocoderRepository, placesDataSource, timeZoneDataSource)
-  geocoderPresenter!!.setUI(this)
+  geocoderPresenter?.setUI(this)
   ***
 }
 ```
@@ -602,11 +590,11 @@ And besides filling the interface methods you have to add some things to your ac
 ```kotlin
 override fun onStart() {
     super.onStart()
-    geocoderPresenter!!.setUI(this)
+    geocoderPresenter?.setUI(this)
 }
 
 override fun onStop() {
-    geocoderPresenter!!.stop()
+    geocoderPresenter?.stop()
     super.onStop()
 }
 ```
@@ -679,7 +667,7 @@ For bugs, questions and discussions please use the [Github Issues](https://githu
 License
 -------
 
-Copyright 2016-2022 Adevinta Spain S.L.
+Copyright 2016-2023 Adevinta Spain S.L.
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.

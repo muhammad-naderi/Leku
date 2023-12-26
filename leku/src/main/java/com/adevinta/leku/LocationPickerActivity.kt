@@ -66,12 +66,6 @@ import com.google.android.gms.maps.GoogleMap.MAP_TYPE_NORMAL
 import com.google.android.gms.maps.GoogleMap.MAP_TYPE_SATELLITE
 import com.google.android.gms.maps.OnMapReadyCallback
 import com.google.android.gms.maps.SupportMapFragment
-import com.google.android.gms.maps.model.BitmapDescriptorFactory
-import com.google.android.gms.maps.model.CameraPosition
-import com.google.android.gms.maps.model.LatLng
-import com.google.android.gms.maps.model.MapStyleOptions
-import com.google.android.gms.maps.model.Marker
-import com.google.android.gms.maps.model.MarkerOptions
 import com.google.android.libraries.places.api.Places
 import com.google.android.material.appbar.MaterialToolbar
 import com.google.android.material.floatingactionbutton.FloatingActionButton
@@ -86,6 +80,14 @@ import com.adevinta.leku.locale.SearchZoneRect
 import com.adevinta.leku.permissions.PermissionUtils
 import com.adevinta.leku.tracker.TrackEvents
 import com.adevinta.leku.utils.ReactiveLocationProvider
+import com.google.android.gms.maps.MapsInitializer
+import com.google.android.gms.maps.model.BitmapDescriptor
+import com.google.android.gms.maps.model.BitmapDescriptorFactory
+import com.google.android.gms.maps.model.LatLng
+import com.google.android.gms.maps.model.Marker
+import com.google.android.gms.maps.model.CameraPosition
+import com.google.android.gms.maps.model.MapStyleOptions
+import com.google.android.gms.maps.model.MarkerOptions
 import java.util.Locale
 import java.util.TimeZone
 import kotlin.collections.set
@@ -143,6 +145,8 @@ class LocationPickerActivity :
     companion object {
         var customDataSource: GeocoderDataSourceInterface? = null
         var customAdapter: LekuSearchAdapter<*, *>? = null
+        var currentLocationBitmapMaker: BitmapDescriptor? = null
+        var otherLocationBitmapMaker: BitmapDescriptor? = null
     }
 
     private var map: GoogleMap? = null
@@ -371,6 +375,9 @@ class LocationPickerActivity :
         }
         searchEditLayout = findViewById(R.id.leku_search_touch_zone)
         searchFrameLayout = findViewById(R.id.search_frame_layout)
+
+        currentLocationBitmapMaker = BitmapDescriptorFactory.defaultMarker(BitmapDescriptorFactory.HUE_RED)
+        otherLocationBitmapMaker = BitmapDescriptorFactory.defaultMarker(BitmapDescriptorFactory.HUE_ORANGE)
     }
 
     private fun setUpResultsList() {
@@ -678,6 +685,8 @@ class LocationPickerActivity :
     }
 
     override fun onDestroy() {
+        currentLocationBitmapMaker = null
+        otherLocationBitmapMaker = null
         textWatcher?.let {
             searchView?.removeTextChangedListener(it)
         }
@@ -686,6 +695,7 @@ class LocationPickerActivity :
     }
 
     override fun onBackPressed() {
+        super.onBackPressed()
         if (!shouldReturnOkOnBackPressed || isLocationInformedFromBundle) {
             setResult(Activity.RESULT_CANCELED)
             track(TrackEvents.CANCEL)
@@ -1599,7 +1609,11 @@ class LocationPickerActivity :
 
     private fun addMarker(latLng: LatLng): Marker? {
         map?.let {
-            return it.addMarker(MarkerOptions().position(latLng).draggable(true))
+            return it.addMarker(
+                MarkerOptions().position(latLng)
+                    .icon(currentLocationBitmapMaker)
+                    .draggable(true)
+            )
         }
         return null
     }
@@ -1608,7 +1622,7 @@ class LocationPickerActivity :
         map?.let {
             return it.addMarker(
                 MarkerOptions().position(latLng)
-                    .icon(BitmapDescriptorFactory.defaultMarker(BitmapDescriptorFactory.HUE_ORANGE))
+                    .icon(otherLocationBitmapMaker)
                     .title(title)
                     .snippet(address)
             )
@@ -1636,15 +1650,19 @@ class LocationPickerActivity :
     private fun fillLocationList(addresses: List<Address>) {
         locationList.clear()
         locationList.addAll(addresses)
-        (searchAdapter as LekuSearchAdapter<SearchViewHolder, Address>)
-            .items = locationList.toList()
+        searchAdapter?.let {
+            (searchAdapter as LekuSearchAdapter<SearchViewHolder, Address>)
+                .items = locationList.toList()
+        }
     }
 
     private fun fillSuggestionList(suggestions: List<PlaceSuggestion>) {
         suggestionList.clear()
         suggestionList.addAll(suggestions)
-        (searchAdapter as LekuSearchAdapter<SuggestionViewHolder, PlaceSuggestion>)
-            ?.items = suggestionList.toList()
+        searchAdapter?.let {
+            (searchAdapter as LekuSearchAdapter<SuggestionViewHolder, PlaceSuggestion>)
+                .items = suggestionList.toList()
+        }
     }
 
     private fun closeKeyboard() {
@@ -1660,7 +1678,7 @@ class LocationPickerActivity :
             .replace(UNNAMED_ROAD_WITH_HYPHEN, "")
     }
 
-    class Builder {
+    class Builder(val context: Context) {
         private var locationLatitude: Double? = null
         private var locationLongitude: Double? = null
         private var searchZoneLocale: String? = null
@@ -1681,6 +1699,22 @@ class LocationPickerActivity :
         private var unnamedRoadVisible = true
         private var isLegacyLayoutEnabled = false
         private var isSearchBarHidden = false
+        private var currentLocationBitmapMaker: BitmapDescriptor? = null
+        private var otherLocationBitmapMaker: BitmapDescriptor? = null
+
+        init {
+            MapsInitializer.initialize(context)
+        }
+
+        fun setCurrentLocation(currentLocation: BitmapDescriptor): Builder {
+            this.currentLocationBitmapMaker = currentLocation
+            return this
+        }
+
+        fun setOtherLocation(otherLocation: BitmapDescriptor): Builder {
+            this.otherLocationBitmapMaker = otherLocation
+            return this
+        }
 
         fun withLocation(latitude: Double, longitude: Double): Builder {
             this.locationLatitude = latitude
@@ -1798,7 +1832,7 @@ class LocationPickerActivity :
             return this
         }
 
-        fun build(context: Context): Intent {
+        fun build(): Intent {
             val intent = Intent(context, LocationPickerActivity::class.java)
 
             locationLatitude?.let {
@@ -1840,7 +1874,8 @@ class LocationPickerActivity :
 
             LocationPickerActivity.customDataSource = customDataSource
             LocationPickerActivity.customAdapter = customAdapter
-
+            LocationPickerActivity.currentLocationBitmapMaker = currentLocationBitmapMaker
+            LocationPickerActivity.otherLocationBitmapMaker = otherLocationBitmapMaker
             return intent
         }
     }

@@ -47,6 +47,7 @@ import com.adevinta.leku.TRANSITION_BUNDLE
 import com.adevinta.leku.ZIPCODE
 import com.adevinta.leku.tracker.LocationPickerTracker
 import com.adevinta.leku.tracker.TrackEvents
+import com.google.android.gms.maps.model.BitmapDescriptorFactory
 import java.util.UUID
 import kotlin.collections.ArrayList
 import kotlin.collections.List
@@ -141,13 +142,15 @@ class MainActivity : AppCompatActivity() {
 
 private fun onLaunchMapPickerClicked(context: Context) {
     val activity = context as MainActivity
-    val locationPickerIntent = LocationPickerActivity.Builder()
+    val locationPickerIntent = LocationPickerActivity.Builder(activity)
         .withLocation(DEMO_LATITUDE, DEMO_LONGITUDE)
         // .withGeolocApiKey("<PUT API KEY HERE>")
         // .withGooglePlacesApiKey("<PUT API KEY HERE>")
         .withSearchZone("es_ES")
         // .withSearchZone(SearchZoneRect(LatLng(26.525467, -18.910366), LatLng(43.906271, 5.394197)))
         .withDefaultLocaleSearchZone()
+        // .setCurrentLocation(BitmapDescriptorFactory.fromResource(R.drawable.common_full_open_on_phone))
+        .setOtherLocation(BitmapDescriptorFactory.defaultMarker(BitmapDescriptorFactory.HUE_AZURE))
         // .shouldReturnOkOnBackPressed()
         // .withStreetHidden()
         // .withCityHidden()
@@ -157,7 +160,7 @@ private fun onLaunchMapPickerClicked(context: Context) {
         // .withVoiceSearchHidden()
         .withUnnamedRoadHidden()
         // .withSearchBarHidden()
-        .build(activity)
+        .build()
 
     // this is optional if you want to return RESULT_OK if you don't set the
     // latitude/longitude and click back button
@@ -168,11 +171,11 @@ private fun onLaunchMapPickerClicked(context: Context) {
 
 private fun onLegacyMapClicked(context: Context) {
     val activity = context as MainActivity
-    val locationPickerIntent = LocationPickerActivity.Builder()
+    val locationPickerIntent = LocationPickerActivity.Builder(activity)
         .withLocation(DEMO_LATITUDE, DEMO_LONGITUDE)
         .withUnnamedRoadHidden()
         .withLegacyLayout()
-        .build(activity)
+        .build()
     activity.lekuActivityResultLauncher.launch(locationPickerIntent)
 }
 
@@ -198,20 +201,20 @@ private val lekuPois: List<LekuPoi>
 
 private fun onMapPoisClicked(context: Context) {
     val activity = context as MainActivity
-    val locationPickerIntent = LocationPickerActivity.Builder()
+    val locationPickerIntent = LocationPickerActivity.Builder(activity)
         .withLocation(DEMO_LATITUDE, DEMO_LONGITUDE)
         .withPois(lekuPois)
-        .build(activity)
+        .build()
 
     activity.mapPoisActivityResultLauncher.launch(locationPickerIntent)
 }
 
 private fun onMapWithStylesClicked(context: Context) {
     val activity = context as MainActivity
-    val locationPickerIntent = LocationPickerActivity.Builder()
+    val locationPickerIntent = LocationPickerActivity.Builder(activity)
         .withLocation(DEMO_LATITUDE, DEMO_LONGITUDE)
         .withMapStyle(R.raw.map_style_retro)
-        .build(activity)
+        .build()
     activity.mapPoisActivityResultLauncher.launch(locationPickerIntent)
 }
 
@@ -221,7 +224,9 @@ fun MainView() {
     val context = LocalContext.current
 
     Column(
-        Modifier.padding(16.dp, 40.dp, 16.dp, 0.dp).fillMaxSize(),
+        Modifier
+            .padding(16.dp, 40.dp, 16.dp, 0.dp)
+            .fillMaxSize(),
         verticalArrangement = Arrangement.spacedBy(20.dp)
     ) {
         Image(
@@ -242,7 +247,9 @@ fun MainView() {
         ) {
             Text(
                 stringResource(id = R.string.launch_map_picker),
-                Modifier.padding(8.dp).fillMaxWidth(),
+                Modifier
+                    .padding(8.dp)
+                    .fillMaxWidth(),
                 textAlign = TextAlign.Center
             )
         }
@@ -257,22 +264,9 @@ fun MainView() {
         ) {
             Text(
                 stringResource(id = R.string.launch_legacy_map_picker),
-                Modifier.padding(8.dp).fillMaxWidth(),
-                textAlign = TextAlign.Center
-            )
-        }
-        Button(
-            colors = ButtonDefaults.buttonColors(
-                backgroundColor = Color(context.resources.getColor(R.color.leku_app_blue)),
-                contentColor = Color.White
-            ),
-            onClick = {
-                onMapPoisClicked(context)
-            }
-        ) {
-            Text(
-                stringResource(id = R.string.launch_map_picker_with_style),
-                Modifier.padding(8.dp).fillMaxWidth(),
+                Modifier
+                    .padding(8.dp)
+                    .fillMaxWidth(),
                 textAlign = TextAlign.Center
             )
         }
@@ -286,15 +280,36 @@ fun MainView() {
             }
         ) {
             Text(
+                stringResource(id = R.string.launch_map_picker_with_style),
+                Modifier
+                    .padding(8.dp)
+                    .fillMaxWidth(),
+                textAlign = TextAlign.Center
+            )
+        }
+        Button(
+            colors = ButtonDefaults.buttonColors(
+                backgroundColor = Color(context.resources.getColor(R.color.leku_app_blue)),
+                contentColor = Color.White
+            ),
+            onClick = {
+                onMapPoisClicked(context)
+            }
+        ) {
+            Text(
                 stringResource(id = R.string.launch_map_picker_with_pois),
-                Modifier.padding(8.dp).fillMaxWidth(),
+                Modifier
+                    .padding(8.dp)
+                    .fillMaxWidth(),
                 textAlign = TextAlign.Center
             )
         }
         Box(modifier = Modifier.fillMaxSize()) {
             Text(
                 stringResource(id = R.string.leku_lib_version),
-                modifier = Modifier.align(Alignment.BottomCenter).padding(0.dp, 0.dp, 0.dp, 8.dp),
+                modifier = Modifier
+                    .align(Alignment.BottomCenter)
+                    .padding(0.dp, 0.dp, 0.dp, 8.dp),
                 textAlign = TextAlign.Center
             )
         }
