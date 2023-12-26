@@ -48,8 +48,7 @@ dependencies {
   implementation 'androidx.fragment:fragment-ktx:1.5.2'  
   implementation "org.jetbrains.kotlinx:kotlinx-coroutines-guava:1.6.4"
 
-  def playServicesVersion = '18.1.0'
-  implementation ("com.google.android.gms:play-services-maps:$playServicesVersion") {
+  implementation ("com.google.android.gms:play-services-maps:$play_services_maps") {
 	  exclude group: "com.android.support"
   }
   implementation ("com.google.android.gms:play-services-location:$play_services_location_version") {
